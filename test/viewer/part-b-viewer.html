@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contract Check Preview</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #2B3473; --accent: #F47C20;
+  --critical: #C4271B; --high: #B4540F; --medium: #85600E; --medium-bar: #EAB84A; --low: #23704F; --low-bar: #3AA078; --high-bar: #F47C20;
+  --bg: #F6F5F2; --surface: #FFFFFF; --ink: #1B1F2E; --ink-2: #4A5068; --ink-3: #6E7385;
+  --line: #E3E1DB; --soft: #EEF0F7; --quote: #FBF8F2;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --r: 6px;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --serif: "Source Serif 4", Georgia, serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --navy: #A9B3F0; --bg: #14161D; --surface: #1C1F29; --ink: #ECEDF2; --ink-2: #B9BCCB; --ink-3: #9094A6;
+    --line: #2E3240; --soft: #242838; --quote: #22252F; --medium: #E2B24A; --low: #5CC28F; --critical: #F2675C; --high: #F79A55;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: var(--s5) var(--s4) var(--s6); }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s3); border-bottom: 2px solid var(--ink); padding-bottom: var(--s3); }
+h1 { font: 600 22px/1.2 var(--sans); margin: 0; letter-spacing: -0.01em; }
+h1 small { display: block; font: 400 13px/1.4 var(--sans); color: var(--ink-3); margin-top: var(--s1); }
+h2 { font: 600 13px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin: var(--s6) 0 var(--s3); }
+.controls { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.seg button { font: 500 13px var(--sans); color: var(--ink-2); background: none; border: 0; padding: var(--s2) var(--s3); min-height: 36px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button[aria-pressed="true"] { color: #14161D; } }
+.btn { font: 500 13px var(--sans); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s2) var(--s3); min-height: 36px; cursor: pointer; }
+.btn:hover, .seg button:hover { border-color: var(--ink-3); }
+button:focus-visible, summary:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* summary band */
+.band { display: grid; grid-template-columns: 220px 1fr; gap: var(--s5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s5); margin-top: var(--s5); }
+.score b { font: 600 56px/1 var(--sans); letter-spacing: -0.03em; }
+.score span { font-size: 16px; color: var(--ink-3); }
+.level { font-weight: 600; margin-top: var(--s2); }
+.bar { height: 6px; background: var(--soft); border-radius: 3px; margin-top: var(--s3); overflow: hidden; }
+.bar i { display: block; height: 100%; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--s3) var(--s4); }
+.fact b { display: block; font: 600 22px/1.1 var(--sans); }
+.fact span { font-size: 12px; color: var(--ink-3); }
+.ai-summary { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: var(--s4); margin: 0; color: var(--ink-2); }
+.meta { grid-column: 1 / -1; font: 400 12px/1.6 var(--mono); color: var(--ink-3); display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); }
+
+/* checks table */
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+th, td { text-align: left; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font: 500 12px var(--sans); color: var(--ink-3); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+.code { font: 400 12px var(--mono); color: var(--ink-3); white-space: nowrap; }
+.chip { display: inline-block; font: 500 12px/1 var(--sans); padding: 5px var(--s2); border-radius: 4px; white-space: nowrap; border: 1px solid currentColor; }
+.v-meets_preferred { color: var(--low); }
+.v-within_fallback { color: var(--low); border-style: dashed; }
+.v-outside_fallback { color: var(--medium); }
+.v-crosses_red_line { color: #fff; background: var(--critical); border-color: var(--critical); }
+.v-missing { color: var(--ink-2); }
+.v-unclear { color: var(--medium); border-style: dashed; }
+.flag { font: 600 11px/1 var(--sans); color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-left: var(--s2); }
+
+/* findings */
+.finding { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--sev); border-radius: var(--r); padding: var(--s4) var(--s5); margin-bottom: var(--s3); }
+.f-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); }
+.f-head h3 { font: 600 16px/1.3 var(--sans); margin: 0; flex: 1 1 260px; }
+.f-sub { font-size: 13px; color: var(--ink-3); margin-top: var(--s1); }
+.sev { font: 600 11px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--sev); }
+.f-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); margin-top: var(--s4); }
+.f-grid .label { font: 500 12px var(--sans); color: var(--ink-3); margin-bottom: var(--s1); }
+blockquote { margin: 0; font: 400 15px/1.55 var(--serif); background: var(--quote); border-left: 2px solid var(--line); padding: var(--s3) var(--s4); }
+blockquote.empty { font: italic 400 14px/1.5 var(--serif); color: var(--ink-3); }
+.desc { margin: var(--s4) 0 0; }
+.why { margin: var(--s2) 0 0; font-size: 13px; color: var(--ink-2); }
+details { margin-top: var(--s3); font-size: 13px; color: var(--ink-2); }
+summary { cursor: pointer; color: var(--navy); font-weight: 500; min-height: 24px; }
+.reasons { margin: var(--s2) 0 0; padding: var(--s2) var(--s3); background: var(--soft); border-radius: 4px; font-size: 13px; }
+.none { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: var(--s4); color: var(--ink-3); }
+ul.plain { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+ul.plain li { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: var(--s3); }
+ul.plain li:last-child { border-bottom: 0; }
+pre.raw { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4); font: 400 12px/1.5 var(--mono); overflow: auto; max-height: 480px; }
+.loader { margin-top: var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4); }
+.loader textarea { width: 100%; min-height: 140px; font: 400 12px var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: var(--s2); background: var(--bg); color: var(--ink); }
+.loader .row { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); align-items: center; }
+.error { color: var(--critical); font-weight: 500; }
+.note { font-size: 12px; color: var(--ink-3); margin-top: var(--s6); border-top: 1px solid var(--line); padding-top: var(--s3); }
+@media (max-width: 720px) {
+  .band { grid-template-columns: 1fr; }
+  .f-grid { grid-template-columns: 1fr; }
+  th.hide-sm, td.hide-sm { display: none; }
+  th, td { padding: var(--s2) var(--s3); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Contract check: Part B result<small id="subtitle">Preview of the /api/compare response, laid out the way a reviewer reads it</small></h1>
+    <div class="controls">
+      <div class="seg" id="samples" role="group" aria-label="Sample results"></div>
+      <button class="btn" id="toggleLoader" aria-expanded="false">Load a response</button>
+    </div>
+  </header>
+
+  <section class="loader" id="loader" hidden>
+    <label for="paste"><strong>Paste a /api/compare response</strong> or choose a .json file. It stays in this browser.</label>
+    <textarea id="paste" spellcheck="false" placeholder='{ "run": { ... }, "summary": { ... }, "findingsJson": { ... } }'></textarea>
+    <div class="row">
+      <button class="btn" id="showPaste">Show this response</button>
+      <input type="file" id="file" accept=".json,application/json" aria-label="Choose a JSON file">
+      <span id="loadError" class="error" role="alert"></span>
+    </div>
+  </section>
+
+  <main id="out" aria-live="polite"></main>
+  <p class="note">Test page only. The SPFx web part shows the same data in its Analysis panel. Nothing here is saved or sent anywhere.</p>
+</div>
+
+<script type="application/json" id="sample-data">/*SAMPLES*/</script>
+<script>
+"use strict";
+const VERDICT = {
+  meets_preferred: "Meets preferred", within_fallback: "Within fallback", outside_fallback: "Outside fallback",
+  crosses_red_line: "Crosses red line", missing: "Missing", unclear: "Unclear",
+};
+const SEV = { critical: "var(--critical)", high: "var(--critical)", medium: "var(--medium)", low: "var(--low)" };
+const LEVEL = { Critical: "var(--critical)", High: "var(--high)", Medium: "var(--medium)", Low: "var(--low)" };
+const LEVEL_BAR = { Critical: "var(--critical)", High: "var(--high-bar)", Medium: "var(--medium-bar)", Low: "var(--low-bar)" };
+
+// Builds elements with textContent only, so response text can never inject HTML.
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v; else if (k === "style") n.style.cssText = v; else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return n;
+}
+const chip = (v) => el("span", { class: `chip v-${v}` }, VERDICT[v] || v);
+
+function render(r) {
+  const out = document.getElementById("out");
+  out.replaceChildren();
+  if (!r || !r.summary || !r.findingsJson) { out.append(el("p", { class: "none" }, "This JSON is not a /api/compare response.")); return; }
+  const s = r.summary, findings = r.findingsJson.findings || [];
+  document.getElementById("subtitle").textContent =
+    `${r.document?.fileName || "Document"} checked against ${r.standard?.title || "standard"} ${r.standard?.version || ""}`;
+
+  const facts = [
+    ["Meets preferred", s.meetsPreferred], ["Within fallback", s.withinFallback], ["Outside fallback", s.outsideFallback],
+    ["Red lines crossed", s.redLinesCrossed], ["Missing", s.missing], ["Needs review", s.needsReview],
+  ];
+  out.append(el("section", { class: "band", "aria-label": "Summary" },
+    el("div", { class: "score" },
+      el("b", null, s.riskScore ?? "–"), el("span", null, " / 100"),
+      el("div", { class: "level", style: `color:${LEVEL[s.riskLevel] || "inherit"}` }, `${s.riskLevel || ""} risk`),
+      el("div", { class: "bar", role: "img", "aria-label": `Risk ${s.riskScore} of 100` },
+        el("i", { style: `width:${Math.max(2, s.riskScore || 0)}%;background:${LEVEL_BAR[s.riskLevel] || "var(--ink-3)"}` }))),
+    el("div", { class: "facts" }, facts.map(([l, v]) => el("div", { class: "fact" }, el("b", null, v ?? 0), el("span", null, l)))),
+    el("p", { class: "ai-summary" }, s.aiSummary || ""),
+    el("div", { class: "meta" },
+      el("span", null, `run ${r.run?.runId}`), el("span", null, `${r.run?.durationSec}s`), el("span", null, r.run?.model),
+      el("span", null, `$${r.run?.estimatedCostUsd}`), el("span", null, `${s.clausesFound} clauses found`),
+      el("span", null, `document stored: ${r.document?.documentStored ? "yes" : "no"}`)),
+  ));
+
+  out.append(el("h2", null, `Rule by rule (${(r.checks || []).length})`));
+  const flagged = new Set(findings.filter((f) => f.needsReview).map((f) => f.ruleCode));
+  out.append(el("table", null,
+    el("thead", null, el("tr", null, el("th", null, "Rule"), el("th", null, "Result"), el("th", null, "Their clause"), el("th", { class: "hide-sm" }, "Confidence"))),
+    el("tbody", null, (r.checks || []).map((c) => el("tr", null,
+      el("td", null, c.rule, el("div", { class: "code" }, c.ruleCode)),
+      el("td", null, chip(c.verdict), flagged.has(c.ruleCode) && el("span", { class: "flag" }, "Needs review")),
+      el("td", null, c.clause || "Not found"),
+      el("td", { class: "code hide-sm" }, `${Math.round((c.confidence || 0) * 100)}%`)))),
+  ));
+
+  out.append(el("h2", null, `Findings to act on (${findings.length})`));
+  if (!findings.length) out.append(el("p", { class: "none" }, "No findings. Every rule meets our preferred position."));
+  for (const f of findings) {
+    out.append(el("article", { class: "finding", style: `--sev:${SEV[f.severity] || "var(--ink-3)"}` },
+      el("div", { class: "f-head" },
+        el("h3", null, f.title), chip(f.verdict), f.needsReview && el("span", { class: "flag" }, "Needs review")),
+      el("div", { class: "f-sub" },
+        el("span", { class: "sev" }, f.severity), ` · ${f.clause === "—" ? "No matching clause" : f.clause} · ${f.category} · Review by ${f.routedTeam}`),
+      el("div", { class: "f-grid" },
+        el("div", null, el("div", { class: "label" }, "They say"),
+          f.proposed ? el("blockquote", null, f.proposed) : el("blockquote", { class: "empty" }, "Their draft has no clause on this.")),
+        el("div", null, el("div", { class: "label" }, "We need"), el("blockquote", null, f.required))),
+      el("p", { class: "desc" }, f.description),
+      el("p", { class: "why" }, f.why),
+      f.needsReview && f.reviewReasons?.length && el("p", { class: "reasons" }, `Why a person should check: ${f.reviewReasons.join("; ")}`),
+      f.aiReasoning && el("details", null, el("summary", null, "AI reasoning"), el("p", null, f.aiReasoning)),
+    ));
+  }
+
+  out.append(el("h2", null, `Their clauses not covered by the standard (${(r.notInStandard || []).length})`));
+  if (!(r.notInStandard || []).length) out.append(el("p", { class: "none" }, "None. Every clause in their draft matched a rule."));
+  else out.append(el("ul", { class: "plain" }, r.notInStandard.map((n) => el("li", null, el("span", null, `${n.clause} ${n.title}`), el("span", { class: "f-sub" }, `Suggested: ${n.suggestedTeam}`)))));
+
+  out.append(el("h2", null, "Raw response"));
+  out.append(el("details", null, el("summary", null, "Show the JSON"), el("pre", { class: "raw" }, JSON.stringify(r, null, 2))));
+}
+
+// Sample buttons
+let samples = [];
+try { samples = JSON.parse(document.getElementById("sample-data").textContent); } catch { samples = []; }
+const seg = document.getElementById("samples");
+function pick(i) {
+  [...seg.children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+  render(samples[i].data);
+}
+samples.forEach((s, i) => seg.append(el("button", { type: "button", "aria-pressed": "false", onclick: null }, s.label)));
+[...seg.children].forEach((b, i) => b.addEventListener("click", () => pick(i)));
+if (samples.length) pick(0);
+else {
+  seg.hidden = true;
+  document.getElementById("loader").hidden = false;
+  document.getElementById("toggleLoader").setAttribute("aria-expanded", "true");
+  document.getElementById("out").append(el("p", { class: "none" }, "No result loaded yet. Paste a /api/compare response above or choose a .json file."));
+}
+
+// Loader
+const loader = document.getElementById("loader"), toggle = document.getElementById("toggleLoader"), err = document.getElementById("loadError");
+toggle.addEventListener("click", () => { loader.hidden = !loader.hidden; toggle.setAttribute("aria-expanded", String(!loader.hidden)); });
+function load(text) {
+  err.textContent = "";
+  try { const r = JSON.parse(text); if (!r.summary || !r.findingsJson) throw new Error(); [...seg.children].forEach((b) => b.setAttribute("aria-pressed", "false")); render(r); }
+  catch { err.textContent = "That is not a valid /api/compare response."; }
+}
+document.getElementById("showPaste").addEventListener("click", () => load(document.getElementById("paste").value));
+document.getElementById("file").addEventListener("change", async (e) => { const f = e.target.files[0]; if (f) load(await f.text()); });
+</script>
+</body>
+</html>

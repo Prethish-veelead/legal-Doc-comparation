@@ -1,0 +1,9 @@
+node_modules/
+.env
+local.settings.json
+*.zip
+# local tool data
+.brud/
+.playwright-cli/
+# internal client brief, kept out of the public repo
+AI clause standards_ architecture and prompt engineer brief.html

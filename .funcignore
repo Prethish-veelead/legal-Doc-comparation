@@ -1,0 +1,10 @@
+.env
+.env.example
+.git*
+.vscode
+local.settings.json
+scripts/
+*.html
+!src/ui/*.html
+*.zip
+test/

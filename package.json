@@ -1,0 +1,21 @@
+{
+  "name": "ldc-clause-builder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "setup-lists": "node scripts/setup-lists.js",
+    "run-local": "node scripts/run-local.js",
+    "run-compare": "node scripts/run-compare.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.17.1",
+    "mammoth": "^1.13.0",
+    "unpdf": "^2.2.1"
+  }
+}
