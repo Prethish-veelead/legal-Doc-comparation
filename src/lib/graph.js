@@ -89,13 +89,14 @@ export async function downloadDocument(documentUrl) {
   }
 
   const serverPath = toServerPath(u);
+  const outside = () => new UserError(`Only documents inside ${c.sitePath} are accepted.`);
+  const sid = await getSiteId();
+  const drives = (await graph(`/sites/${sid}/drives?$select=id,webUrl`)).value;
   let item;
   if (serverPath) {
-    if (!serverPath.toLowerCase().startsWith(c.sitePath.toLowerCase() + "/")) {
-      throw new UserError(`Only documents inside ${c.sitePath} are accepted.`);
-    }
-    const sid = await getSiteId();
-    const drives = (await graph(`/sites/${sid}/drives?$select=id,webUrl`)).value;
+    if (!serverPath.toLowerCase().startsWith(c.sitePath.toLowerCase() + "/")) throw outside();
+    const segments = serverPath.slice(1).split("/");
+    if (segments.some((s) => s === "" || s === "." || s === "..")) throw new UserError("The document link is not valid.");
     const rel = serverPath.slice(c.sitePath.length + 1); // Lib/folder/file.docx
     const drive = drives
       .map((d) => ({ id: d.id, root: decodeURIComponent(new URL(d.webUrl).pathname).slice(c.sitePath.length + 1) }))
@@ -115,11 +116,9 @@ export async function downloadDocument(documentUrl) {
       if (e.status === 404 || e.status === 403) throw new UserError("That sharing link could not be opened.", 404);
       throw e;
     });
-    const itemSite = item.parentReference?.siteId;
-    if (itemSite && itemSite !== (await getSiteId())) {
-      throw new UserError(`Only documents inside ${c.sitePath} are accepted.`);
-    }
   }
+  // Scope check on the resolved item, whichever way it was found: it must sit in one of this site's libraries.
+  if (!drives.some((d) => d.id === item.parentReference?.driveId)) throw outside();
 
   if (!item.file) throw new UserError("The link points to a folder, not a document.");
   if (item.size > c.maxFileBytes) {
